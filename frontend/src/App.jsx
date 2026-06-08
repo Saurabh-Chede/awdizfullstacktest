@@ -5,10 +5,12 @@ import Sidebar from './components/Sidebar';
 import EnrollmentsPage from './pages/EnrollmentsPage';
 import CoursePage from './pages/CoursePage';
 import DashboardPage from './pages/DashboardPage';
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
     <div className="flex w-full gap-4">
+       <Toaster position="top-right" />
       <Sidebar />
 
       <div className="flex-1">

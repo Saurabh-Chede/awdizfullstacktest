@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../config/axiosConfig";
 
@@ -16,6 +16,9 @@ const DashboardPage = () => {
     (state) => state.analytics,
   );
 
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [totalCourses, setTotalCourses] = useState(0);
+
   useEffect(() => {
     fetchAnalytics();
   }, []);
@@ -25,14 +28,19 @@ const DashboardPage = () => {
       dispatch(setLoading(true));
 
       const countRes = await api.get("/analytics/course-student-count");
-
       const revenueRes = await api.get("/analytics/revenue");
-
       const topCoursesRes = await api.get("/analytics/top-courses");
+
+      const studentsRes = await api.get("/students/get-students");
+      const coursesRes = await api.get("/courses/get-courses");
 
       dispatch(setCourseStudentCount(countRes.data));
       dispatch(setRevenue(revenueRes.data));
       dispatch(setTopCourses(topCoursesRes.data));
+
+      setTotalStudents(studentsRes.data.students?.length || 0);
+      setTotalCourses(coursesRes.data?.length || 0);
+
     } catch (error) {
       console.log(error);
     } finally {
@@ -61,7 +69,19 @@ const DashboardPage = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 mb-8">
+          {/* STATS CARDS */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+
+            <div className="border rounded p-4">
+              <h2 className="font-semibold">Total Students</h2>
+              <p className="text-2xl font-bold">{totalStudents}</p>
+            </div>
+
+            <div className="border rounded p-4">
+              <h2 className="font-semibold">Total Courses</h2>
+              <p className="text-2xl font-bold">{totalCourses}</p>
+            </div>
+
             <div className="border rounded p-4">
               <h2 className="font-semibold">Total Enrollments</h2>
               <p className="text-2xl font-bold">{totalEnrollments}</p>
@@ -71,9 +91,10 @@ const DashboardPage = () => {
               <h2 className="font-semibold">Total Revenue</h2>
               <p className="text-2xl font-bold">₹{totalRevenue}</p>
             </div>
+
           </div>
 
-         
+          {/* COURSE WISE COUNT */}
           <div className="mb-8">
             <h2 className="text-xl font-bold mb-3">
               Course Wise Student Count
@@ -98,6 +119,7 @@ const DashboardPage = () => {
             </table>
           </div>
 
+          {/* REVENUE */}
           <div className="mb-8">
             <h2 className="text-xl font-bold mb-3">Revenue Per Course</h2>
 
@@ -120,6 +142,7 @@ const DashboardPage = () => {
             </table>
           </div>
 
+          {/* TOP COURSES */}
           <div>
             <h2 className="text-xl font-bold mb-3">Top Courses</h2>
 

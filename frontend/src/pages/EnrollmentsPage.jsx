@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../config/axiosConfig";
+import toast from "react-hot-toast";
 
 import { setEnrollments, setLoading } from "../store/slices/enrollmentSlice";
 import { setStudents } from "../store/slices/studentSlice";
@@ -35,6 +36,7 @@ const EnrollmentsPage = () => {
       dispatch(setCourses(coursesRes.data));
       dispatch(setEnrollments(enrollmentRes.data));
     } catch (error) {
+      toast.error("Failed to load enrollments data");
       console.log(error);
     } finally {
       dispatch(setLoading(false));
@@ -49,6 +51,8 @@ const EnrollmentsPage = () => {
 
       await api.post("/enrollments/new-enrollment", formData);
 
+      toast.success("Enrollment created successfully");
+
       await fetchData();
 
       setFormData({
@@ -56,6 +60,9 @@ const EnrollmentsPage = () => {
         courseId: "",
       });
     } catch (error) {
+      toast.error(
+        error?.response?.data?.message || "Failed to create enrollment"
+      );
       console.log(error);
     } finally {
       dispatch(setLoading(false));
@@ -66,12 +73,14 @@ const EnrollmentsPage = () => {
     <div className="p-5 relative">
       <h1 className="text-2xl font-bold mb-5">Enrollments</h1>
 
+      {/* LOADING OVERLAY */}
       {loading && (
         <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-50">
           <div className="w-10 h-10 border-4 border-gray-300 border-t-black rounded-full animate-spin"></div>
         </div>
       )}
 
+      {/* FORM */}
       <form onSubmit={handleSubmit} className="flex gap-3 mb-5">
         <select
           value={formData.studentId}
@@ -118,6 +127,7 @@ const EnrollmentsPage = () => {
         </button>
       </form>
 
+      {/* TABLE */}
       <div className="overflow-x-auto">
         <table className="w-full border border-gray-300 text-left">
           <thead className="bg-gray-100">
@@ -133,9 +143,13 @@ const EnrollmentsPage = () => {
             {!loading &&
               enrollments?.map((enrollment) => (
                 <tr key={enrollment._id} className="hover:bg-gray-50">
-                  <td className="border p-2">{enrollment.studentId?.name}</td>
+                  <td className="border p-2">
+                    {enrollment.studentId?.name}
+                  </td>
 
-                  <td className="border p-2">{enrollment.courseId?.title}</td>
+                  <td className="border p-2">
+                    {enrollment.courseId?.title}
+                  </td>
 
                   <td className="border p-2">{enrollment.status}</td>
 
@@ -147,7 +161,7 @@ const EnrollmentsPage = () => {
                             year: "numeric",
                             month: "short",
                             day: "2-digit",
-                          },
+                          }
                         )
                       : "N/A"}
                   </td>

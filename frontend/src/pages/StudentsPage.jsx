@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../config/axiosConfig";
+import toast from "react-hot-toast";
 
 import {
   setStudents,
@@ -29,6 +30,7 @@ const StudentsPage = () => {
       const response = await api.get("/students/get-students");
       dispatch(setStudents(response.data.students));
     } catch (err) {
+      toast.error("Failed to fetch students");
       console.log(err);
     } finally {
       dispatch(setLoading(false));
@@ -60,12 +62,15 @@ const StudentsPage = () => {
 
       dispatch(addStudent(response.data.student));
 
+      toast.success("Student added successfully");
+
       setStudentData({
         name: "",
         email: "",
         mobile: "",
       });
     } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to add student");
       console.log(err);
     } finally {
       dispatch(setLoading(false));
@@ -79,7 +84,10 @@ const StudentsPage = () => {
 
       await api.delete(`/students/delete-student/${id}`);
       dispatch(removeStudent(id));
+
+      toast.success("Student deleted successfully");
     } catch (err) {
+      toast.error("Failed to delete student");
       console.log(err);
     } finally {
       dispatch(setLoading(false));
@@ -88,9 +96,7 @@ const StudentsPage = () => {
 
   return (
     <div className="p-5">
-      <h1 className="text-2xl font-bold mb-5">
-        Students
-      </h1>
+      <h1 className="text-2xl font-bold mb-5">Students</h1>
 
       {/* FORM */}
       <form onSubmit={handleSubmit} className="flex gap-3 mb-5">
@@ -128,9 +134,8 @@ const StudentsPage = () => {
           <div className="w-10 h-10 border-4 border-gray-300 border-t-black rounded-full animate-spin"></div>
         </div>
       ) : (
-        /* TABLE */
         <table className="w-full border">
-          <thead className="">
+          <thead>
             <tr className="text-left">
               <th className="p-2 border-r">Name</th>
               <th className="p-2 border-r">Email</th>
@@ -139,21 +144,16 @@ const StudentsPage = () => {
             </tr>
           </thead>
 
-          <tbody className="border-t border-gray-300">
+          <tbody>
             {students.map((student) => (
-              <tr
-                key={student._id}
-                className="border-t border-gray-300"
-              >
+              <tr key={student._id} className="border-t">
                 <td className="p-2 border-r">{student.name}</td>
                 <td className="p-2 border-r">{student.email}</td>
                 <td className="p-2 border-r">{student.mobile}</td>
 
                 <td className="p-2">
                   <button
-                    onClick={() =>
-                      deleteStudentHandler(student._id)
-                    }
+                    onClick={() => deleteStudentHandler(student._id)}
                     className="bg-red-500 text-white px-3 py-1"
                   >
                     Delete
