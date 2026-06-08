@@ -22,7 +22,6 @@ const StudentsPage = () => {
     mobile: "",
   });
 
-  // GET students
   const getStudents = async () => {
     try {
       dispatch(setLoading(true));
@@ -77,7 +76,6 @@ const StudentsPage = () => {
     }
   };
 
-  // DELETE student
   const deleteStudentHandler = async (id) => {
     try {
       dispatch(setLoading(true));
