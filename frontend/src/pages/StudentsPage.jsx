@@ -1,56 +1,37 @@
-import api from "../config/axiosConfig";
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import api from "../config/axiosConfig";
 
-function StudentsPage() {
-  const [studentsData, setStudentsData] = useState({
+import {
+  setStudents,
+  addStudent,
+  removeStudent,
+  setLoading,
+} from "../store/slices/studentSlice";
+
+const StudentsPage = () => {
+  const dispatch = useDispatch();
+
+  const students = useSelector((state) => state.students.data);
+  const loading = useSelector((state) => state.students.loading);
+
+  const [studentData, setStudentData] = useState({
     name: "",
     email: "",
     mobile: "",
   });
 
-  const [students, setStudents] = useState([]);
-
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-
-    setStudentsData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
+  // GET students
   const getStudents = async () => {
     try {
+      dispatch(setLoading(true));
+
       const response = await api.get("/students/get-students");
-
-      if (response.data.success) {
-        setStudents(response.data.students);
-      }
-    } catch (error) {
-      console.log("Error fetching students:", error);
-    }
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    try {
-      const response = await api.post(
-        "/students/create-student",
-        studentsData
-      );
-
-      console.log(response.data);
-
-      setStudentsData({
-        name: "",
-        email: "",
-        mobile: "",
-      });
-
-      getStudents();
-    } catch (error) {
-      console.log("Error creating student:", error);
+      dispatch(setStudents(response.data.students));
+    } catch (err) {
+      console.log(err);
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 
@@ -58,80 +39,133 @@ function StudentsPage() {
     getStudents();
   }, []);
 
+  const handleChange = (e) => {
+    setStudentData({
+      ...studentData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  // CREATE student
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      dispatch(setLoading(true));
+
+      const response = await api.post(
+        "/students/create-student",
+        studentData
+      );
+
+      dispatch(addStudent(response.data.student));
+
+      setStudentData({
+        name: "",
+        email: "",
+        mobile: "",
+      });
+    } catch (err) {
+      console.log(err);
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
+  // DELETE student
+  const deleteStudentHandler = async (id) => {
+    try {
+      dispatch(setLoading(true));
+
+      await api.delete(`/students/delete-student/${id}`);
+      dispatch(removeStudent(id));
+    } catch (err) {
+      console.log(err);
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
   return (
-    <div>
-      <h1>Students Page</h1>
+    <div className="p-5">
+      <h1 className="text-2xl font-bold mb-5">
+        Students
+      </h1>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Name</label>
-          <br />
-          <input
-            type="text"
-            name="name"
-            value={studentsData.name}
-            onChange={handleInputChange}
-            placeholder="Enter Name"
-          />
-        </div>
+      {/* FORM */}
+      <form onSubmit={handleSubmit} className="flex gap-3 mb-5">
+        <input
+          name="name"
+          placeholder="Name"
+          value={studentData.name}
+          onChange={handleChange}
+          className="border p-2"
+        />
 
-        <br />
+        <input
+          name="email"
+          placeholder="Email"
+          value={studentData.email}
+          onChange={handleChange}
+          className="border p-2"
+        />
 
-        <div>
-          <label>Email</label>
-          <br />
-          <input
-            type="email"
-            name="email"
-            value={studentsData.email}
-            onChange={handleInputChange}
-            placeholder="Enter Email"
-          />
-        </div>
+        <input
+          name="mobile"
+          placeholder="Mobile"
+          value={studentData.mobile}
+          onChange={handleChange}
+          className="border p-2"
+        />
 
-        <br />
-
-        <div>
-          <label>Mobile</label>
-          <br />
-          <input
-            type="text"
-            name="mobile"
-            value={studentsData.mobile}
-            onChange={handleInputChange}
-            placeholder="Enter Mobile"
-          />
-        </div>
-
-        <br />
-
-        <button type="submit">Create Student</button>
+        <button className="bg-black text-white px-4">
+          Add
+        </button>
       </form>
 
-      <hr />
-
-      <h2>Students List</h2>
-
-      {students.length === 0 ? (
-        <p>No students found.</p>
+      {loading ? (
+        <div className="flex justify-center items-center my-10">
+          <div className="w-10 h-10 border-4 border-gray-300 border-t-black rounded-full animate-spin"></div>
+        </div>
       ) : (
-        students.map((student) => (
-          <div
-            key={student._id}
-            style={{
-              border: "1px solid black",
-              padding: "10px",
-              marginBottom: "10px",
-            }}
-          >
-            <h3>{student.name}</h3>
-            <p>Email: {student.email}</p>
-            <p>Mobile: {student.mobile}</p>
-          </div>
-        ))
+        /* TABLE */
+        <table className="w-full border">
+          <thead className="">
+            <tr className="text-left">
+              <th className="p-2 border-r">Name</th>
+              <th className="p-2 border-r">Email</th>
+              <th className="p-2 border-r">Mobile</th>
+              <th className="p-2 border-r">Action</th>
+            </tr>
+          </thead>
+
+          <tbody className="border-t border-gray-300">
+            {students.map((student) => (
+              <tr
+                key={student._id}
+                className="border-t border-gray-300"
+              >
+                <td className="p-2 border-r">{student.name}</td>
+                <td className="p-2 border-r">{student.email}</td>
+                <td className="p-2 border-r">{student.mobile}</td>
+
+                <td className="p-2">
+                  <button
+                    onClick={() =>
+                      deleteStudentHandler(student._id)
+                    }
+                    className="bg-red-500 text-white px-3 py-1"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
-}
+};
 
 export default StudentsPage;
